@@ -35,6 +35,18 @@ notes = {
 	'G#' : 11,
 	'Ab' : 11
 }
+
+note_names = [None]*12
+for note, num in notes.items():
+	if note_names[num] is None:
+		note_names[num] = note
+	else: note_names[num]+= "/" + note
+	
+def note_from_midi(midi_note):
+	return note_names[(midi_note -9)%12] + str((midi_note+3)//12)
+	
+for n in range(100):
+	print note_from_midi(n)
 	
 def freq_from_note(note, octave):
 	return (440. * math.pow(2., (notes[note] - 48 + (octave*12))/12.))
@@ -43,8 +55,8 @@ def freq_from_midi(midi_note):
 	return (440. * math.pow(2., (midi_note-69) /12.))
 
 t_0 = 0
-t_f = 1
-steps = 200
+t_f = .01
+steps = 500
 
 t = np.linspace(t_0, t_f, steps)
 
@@ -54,8 +66,9 @@ t = np.linspace(t_0, t_f, steps)
 
 # for note in notes.keys():
 	# print note + ": " + str(freq_from_note(note, 0))
-print freq_from_note('A', 0)
+for n in range(69, 69+12, 1):
+	plt.plot(t, create_signal(t, freq_from_midi(n), 1,0))
 
-plt.plot(t, create_signal(t, 440, 1, 0))
-plt.plot(t, create_signal(t, 1, 1, np.pi/2))
+# plt.plot(t, create_signal(t, 440, 1, 0))
+# plt.plot(t, create_signal(t, 1, 1, np.pi/2))
 plt.show()
