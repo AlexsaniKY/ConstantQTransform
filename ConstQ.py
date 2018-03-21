@@ -5,6 +5,12 @@ import math
 def create_signal(t, freq, amp, phase):
 	return np.sin(t * freq * 2*np.pi + phase)*amp
 	
+def create_signal_complex(t, freq, amp, phase):
+	return amp * np.exp(1j * (2*np.pi * freq * t + phase))
+	
+def hann_q(freq, sample_rate, q):
+	return np.hanning((1/freq) * sample_rate * q )
+	
 notes = { 
 	'A' : 0,
 	
@@ -54,8 +60,7 @@ def freq_from_note(note, octave):
 def freq_from_midi(midi_note):
 	return (440. * math.pow(2., (midi_note-69) /12.))
 	
-def hann_q(freq, sample_rate, q):
-	return np.hanning((1/freq) * sample_rate * q )
+
 
 sample_rate = 48000 #samples/second
 t_0 = 0   #seconds
@@ -73,14 +78,19 @@ t = np.linspace(t_0, t_f, steps)
 window = np.hanning(steps)
 #plt.plot(t, window)
 	
-for n in range(69, 69+12, 1):
-	f = freq_from_midi(n)
-	s = create_signal(t, f, 1,0)
-	h = hann_q(f, sample_rate, 17)
-	diff = s.size - h.size
-	print diff
-	plt.plot(t, np.multiply(np.pad(h, (np.int_(math.ceil(diff/2.)), np.int_(math.floor(diff/2.))), 'edge'),s))
+s = create_signal_complex(t,freq_from_midi(69),1,0)
+plt.plot(t, s.real)
+plt.plot(t, s.imag)
+	
+# for n in range(69, 69+12, 1):
+	# f = freq_from_midi(n)
+	# s = create_signal(t, f, 1,0)
+	# h = hann_q(f, sample_rate, 34)
+	# diff = s.size - h.size
+	# print diff
+	# plt.plot(t, np.multiply(np.pad(h, (np.int_(math.ceil(diff/2.)), np.int_(math.floor(diff/2.))), 'edge'),s))
 
+	
 # plt.plot(t, create_signal(t, 440, 1, 0))
 # plt.plot(t, create_signal(t, 1, 1, np.pi/2))
 plt.show()
