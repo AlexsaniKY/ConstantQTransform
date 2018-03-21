@@ -11,6 +11,11 @@ def create_signal_complex(t, freq, amp, phase):
 def hann_q(freq, sample_rate, q):
 	return np.hanning((1/freq) * sample_rate * q )
 	
+def hann_q_complex(freq, sample_rate,q):
+	return np.hanning((1/freq) * sample_rate * q ).astype(complex)
+	
+
+	
 notes = { 
 	'A' : 0,
 	
@@ -49,7 +54,7 @@ for note, num in notes.items():
 	else: note_names[num]+= "/" + note
 	
 def note_from_midi(midi_note):
-	return note_names[(midi_note -9)%12] + str((midi_note+3)//12)
+	return note_names[(midi_note -9)%12] + str((midi_note+3)//12-2)
 	
 # for n in range(100):
 	# print note_from_midi(n)
@@ -72,16 +77,23 @@ t = np.linspace(t_0, t_f, steps)
 # freq = 1
 # amp = 1
 # phase = 0
+print freq_from_midi(69)
+print note_from_midi(69)
+print freq_from_note('A', 4)
 
-# for note in notes.keys():
-	# print note + ": " + str(freq_from_note(note, 0))
-window = np.hanning(steps)
-#plt.plot(t, window)
+note_span = 12
+step = 1
+for n in (x*step + 69 for x in range(0, int(note_span//step), 1)):
+	f = freq_from_midi(n)
+	print note_from_midi(n)
+	h = hann_q_complex(f, sample_rate, 1)
+	s = create_signal_complex(t[:h.size],f,1,0)
+	output = np.multiply(h,s)
+	plt.plot(t[:output.size], output.real)
+	plt.plot(t[:output.size], output.imag)
 	
-s = create_signal_complex(t,freq_from_midi(69),1,0)
-plt.plot(t, s.real)
-plt.plot(t, s.imag)
 	
+
 # for n in range(69, 69+12, 1):
 	# f = freq_from_midi(n)
 	# s = create_signal(t, f, 1,0)
