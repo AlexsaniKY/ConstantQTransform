@@ -9,7 +9,7 @@ def create_signal_complex(t, freq, amp, phase):
 	return amp * np.exp(1j * (2*np.pi * freq * t + phase))
 	
 def hann_q(freq, sample_rate, q):
-	return np.hanning((1/freq) * sample_rate * q )
+	return np.hanning(math.floor((1/freq) * sample_rate * q ))
 
 	
 
@@ -65,12 +65,12 @@ def freq_from_midi(midi_note):
 	
 
 
-sample_rate = 48000 #samples/second
-t_0 = 0   #seconds
-t_f = .1 #seconds
-steps = sample_rate * (t_f - t_0)
+# sample_rate = 48000 #samples/second
+# t_0 = 0   #seconds
+# t_f = .1 #seconds
+# steps = sample_rate * (t_f - t_0)
 
-t = np.linspace(t_0, t_f, steps)
+# t = np.linspace(t_0, t_f, steps)
 
 # freq = 1
 # amp = 1
@@ -79,16 +79,49 @@ print (freq_from_midi(69))
 print (note_from_midi(69))
 print (freq_from_note('A', 4))
 
-note_span = 12
-step = 1
-for n in (x*step + 69 for x in range(0, int(note_span//step), 1)):
-	f = freq_from_midi(n)
-	print (note_from_midi(n))
-	h = hann_q(f, sample_rate, 1).astype(complex)
-	s = create_signal_complex(t[:h.size],f,1,0)
-	output = np.multiply(h,s)
-	plt.plot(t[:output.size], output.real)
-	plt.plot(t[:output.size], output.imag)
+def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
+	print(frequencies)
+	min_freq = min(frequencies)
+	print(min_freq)
+	time_span = (1./min_freq) * q
+	steps = time_span * sample_rate
+	if align is 'left':
+		t_0 = 0
+		t_f = time_span
+	elif align is 'right':
+		t_0 = -1 * time_span
+		t_f = 0
+	else:
+		t_0 = -1 * (time_span/2.)
+		t_f = time_span/2.
+	t = np.linspace(t_0, t_f, steps)
+	print(t_0, t_f, steps)
+	print(t.shape)
+	offset = 0j
+	for freq in frequencies:
+		#print(t)
+		h = hann_q(freq, sample_rate, q).astype(complex)
+		#print(h.shape)
+		s = create_signal_complex(t[:h.size], freq, 1, 0)
+		#print(s.shape)
+		output = np.multiply(h,s)
+		#output += offset
+		#offset += 2 + 2j
+		plt.plot(t[:output.size], output.real)
+		plt.plot(t[:output.size], output.imag)
+
+temporal_kernel(list(float(freq_from_midi(x)) for x in range(69,69+12,1)), 5, 48000, align = 'center')
+
+# note_span = 12
+# step = 1
+# for n in (x*step + 69 for x in range(0, int(note_span//step), 1)):
+	# f = freq_from_midi(n)
+	# print (note_from_midi(n))
+	# h = hann_q(f, sample_rate, 1).astype(complex)
+	# s = create_signal_complex(t[:h.size],f,1,0)
+	# output = np.multiply(h,s)
+	# plt.plot(t[:output.size], output.real)
+	# plt.plot(t[:output.size], output.imag)
 	
 	
 
