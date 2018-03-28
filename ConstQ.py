@@ -16,33 +16,17 @@ def hann_q(freq, sample_rate, q):
 	
 notes = { 
 	'A' : 0,
-	
-	'A#': 1,
-	'Bb': 1,
-	
+	'A#': 1,	'Bb': 1,
 	'B' : 2,
-	
 	'C' : 3,
-	
-	'C#': 4,
-	'Db': 4,
-	
+	'C#': 4,	'Db': 4,
 	'D' : 5,
-	
-	'D#': 6,
-	'Eb': 6,
-	
+	'D#': 6,	'Eb': 6,
 	'E' : 7,
-	
 	'F' : 8,
-	
-	'F#' : 9,
-	'Gb' : 9,
-	
+	'F#' : 9,	'Gb' : 9,
 	'G' : 10,
-	
-	'G#' : 11,
-	'Ab' : 11
+	'G#' : 11,	'Ab' : 11
 }
 
 note_names = [None]*12
@@ -101,16 +85,22 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 	for freq in frequencies:
 		#print(t)
 		h = hann_q(freq, sample_rate, q).astype(complex)
-		#print(h.shape)
-		s = create_signal_complex(t[:h.size], freq, 1, 0)
-		#print(s.shape)
+		print(h.shape)
+		if align is 'left':
+			t_view = t[:h.size]
+		elif align is 'right':
+			t_view = t[-h.size:]
+		else:
+			t_view = t[t.size//2 - (h.size//2): t.size//2 +math.ceil(h.size/2.)]
+		s = create_signal_complex(t_view, freq, 1, 0)
+		print(s.shape)
 		output = np.multiply(h,s)
 		#output += offset
 		#offset += 2 + 2j
-		plt.plot(t[:output.size], output.real)
-		plt.plot(t[:output.size], output.imag)
+		plt.plot(t_view, output.real)
+		plt.plot(t_view, output.imag)
 
-temporal_kernel(list(float(freq_from_midi(x)) for x in range(69,69+12,1)), 5, 48000, align = 'center')
+temporal_kernel(list(float(freq_from_midi(x)) for x in range(69,69+12,1)), 17, 48000, align = 'center')
 
 # note_span = 12
 # step = 1
