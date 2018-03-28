@@ -64,11 +64,12 @@ print (note_from_midi(69))
 print (freq_from_note('A', 4))
 
 def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
-	print(frequencies)
+	#print(frequencies)
 	min_freq = min(frequencies)
-	print(min_freq)
+	#print(min_freq)
 	time_span = (1./min_freq) * q
 	steps = time_span * sample_rate
+	kernel = np.zeros((len(frequencies), steps), complex)
 	if align is 'left':
 		t_0 = 0
 		t_f = time_span
@@ -79,37 +80,54 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 		t_0 = -1 * (time_span/2.)
 		t_f = time_span/2.
 	t = np.linspace(t_0, t_f, steps)
-	print(t_0, t_f, steps)
-	print(t.shape)
-	offset = 0j
+	#print(t_0, t_f, steps)
+	#print(t.shape)
+	#offset = 0j
+	frequency_row = 0
 	for freq in frequencies:
 		#print(t)
 		h = hann_q(freq, sample_rate, q).astype(complex)
-		print(h.shape)
+		#print(h.shape)
 		if align is 'left':
-			t_view = t[:h.size]
+			t_start = 0
+			t_end   = h.size
 		elif align is 'right':
-			t_view = t[-h.size:]
+			t_start = t.size - h.size
+			t_end   = t.size
 		else:
-			t_view = t[t.size//2 - (h.size//2): t.size//2 +math.ceil(h.size/2.)]
+			t_start = t.size//2 - (h.size//2)
+			t_end   = t.size//2 + math.ceil(h.size/2.)
+		t_view = t[t_start : t_end]
 		s = create_signal_complex(t_view, freq, 1, 0)
-		print(s.shape)
-		output = np.multiply(h,s)
+		#print(s.shape)
+		kernel[frequency_row][t_start:t_end] = np.multiply(h,s)
 		#output += offset
 		#offset += 2 + 2j
-		plt.plot(t_view, output.real)
-		plt.plot(t_view, output.imag)
+		
+		# plt.plot(t, kernel[frequency_row].real)
+		# plt.plot(t, kernel[frequency_row].imag)
+		frequency_row +=1
+	return kernel
 
 		
 if __name__ == "__main__":
-	#temporal_kernel(list(float(freq_from_midi(x)) for x in range(69,69+12,1)), 17, 48000, align = 'center')
-	
 	import scipy.io.wavfile as wavread
+	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", float)
+	note_start = 69-24
+	note_span = 96
+	k = temporal_kernel(list(float(freq_from_midi(x)) for x in range(note_start, note_start + note_span, 1)), 17, rate, align = 'center')
+	
+	
 
-	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav")
+	
 	print("open successful")
 	print(rate)
-	plt.plot(np.linspace(0, waveform.size/44100. ,waveform.size) ,waveform/65536.)
+	time = np.linspace(0, waveform.size/float(rate) ,waveform.size)
+	norm_wav = waveform / 65536.
+	output = np.matmul(k, norm_wav[:k.shape[1]] )
+	print(time[:output.size].shape)
+	print(output.shape)
+	plt.plot( np.arange(note_start, note_start + note_span), np.abs(output))
 
 	
 	plt.show()
