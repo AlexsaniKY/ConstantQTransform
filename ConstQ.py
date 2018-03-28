@@ -69,7 +69,7 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 	#print(min_freq)
 	time_span = (1./min_freq) * q
 	steps = time_span * sample_rate
-	kernel = np.zeros((len(frequencies), steps), complex)
+	kernel = np.zeros((len(frequencies), int(steps)), complex)
 	if align is 'left':
 		t_0 = 0
 		t_f = time_span
