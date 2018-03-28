@@ -100,7 +100,20 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 		plt.plot(t_view, output.real)
 		plt.plot(t_view, output.imag)
 
-temporal_kernel(list(float(freq_from_midi(x)) for x in range(69,69+12,1)), 17, 48000, align = 'center')
+		
+if __name__ == "__main__":
+	#temporal_kernel(list(float(freq_from_midi(x)) for x in range(69,69+12,1)), 17, 48000, align = 'center')
+	
+	import scipy.io.wavfile as wavread
+
+	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav")
+	print("open successful")
+	print(rate)
+	plt.plot(np.linspace(0, waveform.size/44100. ,waveform.size) ,waveform/65536.)
+
+	
+	plt.show()
+	
 
 # note_span = 12
 # step = 1
@@ -126,4 +139,3 @@ temporal_kernel(list(float(freq_from_midi(x)) for x in range(69,69+12,1)), 17, 4
 	
 # plt.plot(t, create_signal(t, 440, 1, 0))
 # plt.plot(t, create_signal(t, 1, 1, np.pi/2))
-plt.show()
