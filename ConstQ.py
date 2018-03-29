@@ -35,41 +35,32 @@ for note, num in notes.items():
 		note_names[num] = note
 	else: note_names[num]+= "/" + note
 	
+# converts note name from a midi value
 def note_from_midi(midi_note):
 	return note_names[(midi_note -9)%12] + str((midi_note+3)//12-2)
-	
-# for n in range(100):
-	# print note_from_midi(n)
-	
+
+# returns the frequency of a note with given name and octave
 def freq_from_note(note, octave):
 	return (440. * math.pow(2., (notes[note] - 48 + (octave*12))/12.))
-	
+
+# returns the frequency of given midi note. Works with fractional notes	
 def freq_from_midi(midi_note):
 	return (440. * math.pow(2., (midi_note-69) /12.))
 	
-
-
-# sample_rate = 48000 #samples/second
-# t_0 = 0   #seconds
-# t_f = .1 #seconds
-# steps = sample_rate * (t_f - t_0)
-
-# t = np.linspace(t_0, t_f, steps)
-
-# freq = 1
-# amp = 1
-# phase = 0
 print (freq_from_midi(69))
 print (note_from_midi(69))
 print (freq_from_note('A', 4))
 
+
 def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
-	#print(frequencies)
+	# get lowest frequency (longest wavelength)
 	min_freq = min(frequencies)
-	#print(min_freq)
+	#prepare time values 
 	time_span = (1./min_freq) * q
 	steps = time_span * sample_rate
+    #prepare kernel matrix
 	kernel = np.zeros((len(frequencies), int(steps)), complex)
+    #align the waves to the matrix
 	if align is 'left':
 		t_0 = 0
 		t_f = time_span
@@ -80,14 +71,12 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 		t_0 = -1 * (time_span/2.)
 		t_f = time_span/2.
 	t = np.linspace(t_0, t_f, steps)
-	#print(t_0, t_f, steps)
-	#print(t.shape)
-	#offset = 0j
+    #create the frequency bins
 	frequency_row = 0
 	for freq in frequencies:
-		#print(t)
+        #create windowing function
 		h = hann_q(freq, sample_rate, q).astype(complex)
-		#print(h.shape)
+        #position the samples in a view
 		if align is 'left':
 			t_start = 0
 			t_end   = h.size
@@ -98,29 +87,23 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 			t_start = t.size//2 - (h.size//2)
 			t_end   = t.size//2 + math.ceil(h.size/2.)
 		t_view = t[t_start : t_end]
+        #create complex sinusoid
 		s = create_signal_complex(t_view, freq, 1, 0)
-		#print(s.shape)
+        #replace into the kernel array
 		kernel[frequency_row][t_start:t_end] = np.multiply(h,s)
-		#output += offset
-		#offset += 2 + 2j
-		
-		# plt.plot(t, kernel[frequency_row].real)
-		# plt.plot(t, kernel[frequency_row].imag)
+        #next frequency
 		frequency_row +=1
 	return kernel
 
 		
 if __name__ == "__main__":
 	import scipy.io.wavfile as wavread
-	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", float)
+	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
+    
 	note_start = 69-24
 	note_span = 96
 	k = temporal_kernel(list(float(freq_from_midi(x)) for x in range(note_start, note_start + note_span, 1)), 17, rate, align = 'center')
-	
-	
 
-	
-	print("open successful")
 	print(rate)
 	time = np.linspace(0, waveform.size/float(rate) ,waveform.size)
 	norm_wav = waveform / 65536.
