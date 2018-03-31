@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.pyplot as pyplt
 import math
+from scipy.ndimage import gaussian_filter1d
 
 def create_signal(t, freq, amp, phase):
 	return np.sin(t * freq * 2*np.pi + phase)*amp
@@ -72,6 +73,7 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 		t_0 = -1 * (time_span/2.)
 		t_f = time_span/2.
 	t = np.linspace(t_0, t_f, steps)
+	
     #create the frequency bins
 	frequency_row = 0
 	for freq in frequencies:
@@ -88,6 +90,7 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
 			t_start = t.size//2 - (h.size//2)
 			t_end   = t.size//2 + math.ceil(h.size/2.)
 		t_view = t[t_start : t_end]
+		
         #create complex sinusoid
 		s = create_signal_complex(t_view, freq, 1, 0)
         #replace into the kernel array
@@ -95,25 +98,58 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
         #next frequency
 		frequency_row +=1
 	return kernel
+	
+def max_slices(array, slice_width, spacing_ratio):
+	if spacing_ratio < 1/float(slice_width):
+		space_distance = 1
+	else: space_distance = slice_width * spacing_ratio
+	return math.ceil(array.shape[0]/space_distance)
+
+def generate_slices(array, slice_width, spacing_ratio):
+	position = 0
+	if spacing_ratio < 1/float(slice_width):
+		space_distance = 1
+		print("spacing ratio for slicing is too small, offset of 1 sample per slice assumed")
+	else: space_distance = math.ceil(slice_width * spacing_ratio)
+	
+	while position + slice_width <= array.shape[0]:
+		yield array[position: position + slice_width]
+		position += space_distance
+		#print(position)
 
 		
 if __name__ == "__main__":
 	import scipy.io.wavfile as wavread
 	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
-    
-	note_start = 69-24
-	note_span = 96
-	#nyquist limited frequencies
-	frequencies = list(y for y in (freq_from_midi(x) for x in range(note_start, note_start + note_span, 1)) if y < rate/2)
-	k = temporal_kernel(frequencies, 17, rate, align = 'center')
-	pyplt.pcolormesh(k.real)
+	#rate, waveform =  wavread.read("media\\Dramophone.wav", np.float32)
+	#rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
 	
-	print(rate)
+	note_start = 69-12
+	note_span = 48
+	note_step = 1
+	#nyquist limited frequencies
+	frequencies = list(y for y in (freq_from_midi(note_start + (x*note_step)) for x in range(0, int(note_span/note_step), 1)) if y < rate/2)
+	#print(frequencies)
+	k = temporal_kernel(frequencies, 34, rate, align = 'center')
+	#pyplt.pcolormesh(k.real)
+	
+	#print(rate)
 	time = np.linspace(0, waveform.size/float(rate) ,waveform.size)
-	norm_wav = waveform / 65536.
-	output = np.matmul(k, norm_wav[:k.shape[1]] )
+	if len(waveform.shape) > 1:
+		norm_wav = waveform[:,0] / 65536.
+	else: norm_wav = waveform / 65536.
+	
+	output = np.zeros((max_slices(norm_wav, k.shape[1], .1), k.shape[0]), complex)
+	print("output shape: " + str(output.shape))
+	slice_index = 0
+	for slice in generate_slices(norm_wav, k.shape[1], .1):
+		output[slice_index] = np.matmul(k, slice)#norm_wav[:k.shape[1]] )
+		slice_index += 1
 	print(time[:output.size].shape)
 	print(output.shape)
+	#pyplt.pcolormesh(gaussian_filter1d(np.abs(output), 1, 0))
+	#pyplt.pcolormesh(np.abs(output[:, :-1:2] + output[:, 1::2]))
+	pyplt.pcolormesh(np.abs(output))
 	#plt.plot( np.arange(note_start, note_start + len(frequencies)), np.abs(output))
 
 	
