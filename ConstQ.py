@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pylab as plt
+import matplotlib.pyplot as pyplt
 import math
 
 def create_signal(t, freq, amp, phase):
@@ -102,15 +103,18 @@ if __name__ == "__main__":
     
 	note_start = 69-24
 	note_span = 96
-	k = temporal_kernel(list(float(freq_from_midi(x)) for x in range(note_start, note_start + note_span, 1)), 17, rate, align = 'center')
-
+	#nyquist limited frequencies
+	frequencies = list(y for y in (freq_from_midi(x) for x in range(note_start, note_start + note_span, 1)) if y < rate/2)
+	k = temporal_kernel(frequencies, 17, rate, align = 'center')
+	pyplt.pcolormesh(k.real)
+	
 	print(rate)
 	time = np.linspace(0, waveform.size/float(rate) ,waveform.size)
 	norm_wav = waveform / 65536.
 	output = np.matmul(k, norm_wav[:k.shape[1]] )
 	print(time[:output.size].shape)
 	print(output.shape)
-	plt.plot( np.arange(note_start, note_start + note_span), np.abs(output))
+	#plt.plot( np.arange(note_start, note_start + len(frequencies)), np.abs(output))
 
 	
 	plt.show()
