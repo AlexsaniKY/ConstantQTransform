@@ -94,7 +94,7 @@ def temporal_kernel(frequencies, q, sample_rate, align = 'center'):
         #create complex sinusoid
 		s = create_signal_complex(t_view, freq, 1, 0)
         #replace into the kernel array
-		kernel[frequency_row][t_start:t_end] = np.multiply(h,s)
+		kernel[frequency_row][t_start:t_end] = (1./h.size) * np.multiply(h,s)
         #next frequency
 		frequency_row +=1
 	return kernel
@@ -120,13 +120,13 @@ def generate_slices(array, slice_width, spacing_ratio):
 		
 if __name__ == "__main__":
 	import scipy.io.wavfile as wavread
-	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
-	#rate, waveform =  wavread.read("media\\Dramophone.wav", np.float32)
-	#rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
+	#rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
+	#rate, waveform =  wavread.read("media\\Feathers Rise.wav", np.float32)
+	rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
 	
-	note_start = 69-12
-	note_span = 48
-	note_step = 1
+	note_start = 69-24 -.1
+	note_span = 48*2
+	note_step = .2
 	#nyquist limited frequencies
 	frequencies = list(y for y in (freq_from_midi(note_start + (x*note_step)) for x in range(0, int(note_span/note_step), 1)) if y < rate/2)
 	#print(frequencies)
@@ -139,17 +139,22 @@ if __name__ == "__main__":
 		norm_wav = waveform[:,0] / 65536.
 	else: norm_wav = waveform / 65536.
 	
-	output = np.zeros((max_slices(norm_wav, k.shape[1], .1), k.shape[0]), complex)
+	output = np.zeros((max_slices(norm_wav, k.shape[1], .01), k.shape[0]), complex)
 	print("output shape: " + str(output.shape))
 	slice_index = 0
-	for slice in generate_slices(norm_wav, k.shape[1], .1):
+	for slice in generate_slices(norm_wav, k.shape[1], .01):
 		output[slice_index] = np.matmul(k, slice)#norm_wav[:k.shape[1]] )
 		slice_index += 1
 	print(time[:output.size].shape)
 	print(output.shape)
-	#pyplt.pcolormesh(gaussian_filter1d(np.abs(output), 1, 0))
+	pyplt.pcolormesh(gaussian_filter1d(np.abs(output), 1, 0))
 	#pyplt.pcolormesh(np.abs(output[:, :-1:2] + output[:, 1::2]))
-	pyplt.pcolormesh(np.abs(output))
+	# note_spectra = np.zeros((output.shape[0], 12), complex)
+	# print(note_spectra.shape)
+	# for i in range(12):
+		# for j in range(int(output.shape[1]/12)):
+			# note_spectra[:,i] += output[:,i + 12*j]
+	# pyplt.pcolormesh(gaussian_filter1d(np.abs(note_spectra), 3, 0))
 	#plt.plot( np.arange(note_start, note_start + len(frequencies)), np.abs(output))
 
 	
