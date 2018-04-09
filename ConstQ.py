@@ -131,9 +131,9 @@ def generate_slices(array, slice_width, spacing_ratio):
 if __name__ == "__main__":
 	import scipy.io.wavfile as wavread
 	#rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
-	#rate, waveform =  wavread.read("media\\Feathers Rise.wav", np.float32)
+	rate, waveform =  wavread.read("media\\Feathers Rise.wav", np.float32)
 	#rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
-	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
+	#rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
 	
 	
 	note_start = 69-24 -0
@@ -157,14 +157,16 @@ if __name__ == "__main__":
 	for slice in generate_slices(norm_wav, k.shape[1], .01):
 		cqt[slice_index] = np.matmul(k, slice)#norm_wav[:k.shape[1]] )
 		slice_index += 1
-	print(time[:cqt.size].shape)
-	print(cqt.shape)
-	spectralchange = np.abs(cqt).astype(float)
-	spectralchange[1:,:] = spectralchange[1:,:] - spectralchange[:-1,:]
-	spectralchange *= 10000
 	
 	plt.subplot(2,1,1)
-	pyplt.pcolormesh(gaussian_filter1d(np.abs(cqt), 1, 0))
+	
+	cqt = np.abs(cqt).astype(float)
+	cqt = gaussian_filter1d(cqt, sigma = 2, axis = 0)
+	
+	spectralchange = np.copy(cqt)
+	spectralchange[1:,:] = spectralchange[1:,:] - spectralchange[:-1,:]
+	spectralchange *= 10000
+	pyplt.pcolormesh(cqt)
 	plt.subplot(2, 1, 2)
 	pyplt.pcolormesh(gaussian_filter1d(spectralchange, 1, 0), norm = MidpointNormalize(midpoint = 0))#, cmap = mt.cm.get_cmap('Spectral'))
 	
