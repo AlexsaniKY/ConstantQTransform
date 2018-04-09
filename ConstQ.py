@@ -124,9 +124,9 @@ if __name__ == "__main__":
 	#rate, waveform =  wavread.read("media\\Feathers Rise.wav", np.float32)
 	rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
 	
-	note_start = 69-24 -.1
+	note_start = 69-24 -0
 	note_span = 48*2
-	note_step = .2
+	note_step = 1
 	#nyquist limited frequencies
 	frequencies = list(y for y in (freq_from_midi(note_start + (x*note_step)) for x in range(0, int(note_span/note_step), 1)) if y < rate/2)
 	#print(frequencies)
@@ -139,15 +139,21 @@ if __name__ == "__main__":
 		norm_wav = waveform[:,0] / 65536.
 	else: norm_wav = waveform / 65536.
 	
-	output = np.zeros((max_slices(norm_wav, k.shape[1], .01), k.shape[0]), complex)
-	print("output shape: " + str(output.shape))
+	cqt = np.zeros((max_slices(norm_wav, k.shape[1], .01), k.shape[0]), complex)
+	print("output shape: " + str(cqt.shape))
 	slice_index = 0
 	for slice in generate_slices(norm_wav, k.shape[1], .01):
-		output[slice_index] = np.matmul(k, slice)#norm_wav[:k.shape[1]] )
+		cqt[slice_index] = np.matmul(k, slice)#norm_wav[:k.shape[1]] )
 		slice_index += 1
-	print(time[:output.size].shape)
-	print(output.shape)
-	pyplt.pcolormesh(gaussian_filter1d(np.abs(output), 1, 0))
+	print(time[:cqt.size].shape)
+	print(cqt.shape)
+	spectralchange = np.abs(cqt).astype(float)
+	spectralchange[1:,:] = spectralchange[1:,:] - spectralchange[:-1,:]
+	
+	#pyplt.pcolormesh(gaussian_filter1d(np.abs(cqt), 1, 0))
+	pyplt.pcolormesh(spectralchange)
+	
+	
 	#pyplt.pcolormesh(np.abs(output[:, :-1:2] + output[:, 1::2]))
 	# note_spectra = np.zeros((output.shape[0], 12), complex)
 	# print(note_spectra.shape)
