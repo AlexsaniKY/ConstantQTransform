@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib as mt
 import matplotlib.pylab as plt
 import matplotlib.pyplot as pyplt
 import math
@@ -13,8 +14,17 @@ def create_signal_complex(t, freq, amp, phase):
 def hann_q(freq, sample_rate, q):
 	return np.hanning(math.floor((1/freq) * sample_rate * q ))
 
-	
+#from https://stackoverflow.com/questions/20144529/shifted-colorbar-matplotlib/20146989#20146989
+class MidpointNormalize(mt.colors.Normalize):
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        mt.colors.Normalize.__init__(self, vmin, vmax, clip)
 
+    def __call__(self, value, clip=None):
+        # I'm ignoring masked values and all kinds of edge cases to make a
+        # simple example...
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y))
 	
 notes = { 
 	'A' : 0,
@@ -122,11 +132,13 @@ if __name__ == "__main__":
 	import scipy.io.wavfile as wavread
 	#rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
 	#rate, waveform =  wavread.read("media\\Feathers Rise.wav", np.float32)
-	rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
+	#rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
+	rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
+	
 	
 	note_start = 69-24 -0
 	note_span = 48*2
-	note_step = 1
+	note_step = .5
 	#nyquist limited frequencies
 	frequencies = list(y for y in (freq_from_midi(note_start + (x*note_step)) for x in range(0, int(note_span/note_step), 1)) if y < rate/2)
 	#print(frequencies)
@@ -149,9 +161,12 @@ if __name__ == "__main__":
 	print(cqt.shape)
 	spectralchange = np.abs(cqt).astype(float)
 	spectralchange[1:,:] = spectralchange[1:,:] - spectralchange[:-1,:]
+	spectralchange *= 10000
 	
-	#pyplt.pcolormesh(gaussian_filter1d(np.abs(cqt), 1, 0))
-	pyplt.pcolormesh(spectralchange)
+	plt.subplot(2,1,1)
+	pyplt.pcolormesh(gaussian_filter1d(np.abs(cqt), 1, 0))
+	plt.subplot(2, 1, 2)
+	pyplt.pcolormesh(gaussian_filter1d(spectralchange, 1, 0), norm = MidpointNormalize(midpoint = 0))#, cmap = mt.cm.get_cmap('Spectral'))
 	
 	
 	#pyplt.pcolormesh(np.abs(output[:, :-1:2] + output[:, 1::2]))
