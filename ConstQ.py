@@ -131,8 +131,8 @@ def generate_slices(array, slice_width, spacing_ratio):
 if __name__ == "__main__":
 	import scipy.io.wavfile as wavread
 	#rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
-	rate, waveform =  wavread.read("media\\Feathers Rise.wav", np.float32)
-	#rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
+	#rate, waveform =  wavread.read("media\\Feathers Rise.wav", np.float32)
+	rate, waveform =  wavread.read("media\\134010__davidkyoku__c-major-mutted-scale.wav", np.float32)
 	#rate, waveform =  wavread.read("media\\387517__deleted-user-7267864__saxophone-going-up.wav", np.float32)
 	
 	
